@@ -1,0 +1,232 @@
+{% extends 'dish/dish_base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>菜品列表</h2>
+        </div>
+        <div class="col-auto">
+            <button id="recommendBtn" class="btn btn-warning">
+                <i class="fas fa-random"></i> 今天吃什么？
+            </button>
+            {% if request.session.is_login %}
+            <a href="{% url 'dish:show_preferences' 'favorite' %}" class="btn btn-outline-primary">
+                <i class="fas fa-heart"></i> 我的收藏
+            </a>
+            <a href="{% url 'dish:show_preferences' 'blocked' %}" class="btn btn-outline-danger">
+                <i class="fas fa-ban"></i> 拉黑列表
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 窗口选择 -->
+    <div class="container mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">选择窗口</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col">
+                        <a href="{% url 'dish:show_dish' %}" class="btn {% if not current_filters.shop_id %}btn-primary{% else %}btn-outline-primary{% endif %} mb-2">
+                            全部窗口
+                        </a>
+                        {% for shop in shop_with_dish_list %}
+                        <a href="{% url 'dish:show_dish' %}?shop_id={{ shop.shop_id }}" 
+                           class="btn {% if current_filters.shop_id == shop.shop_id|stringformat:'i' %}btn-primary{% else %}btn-outline-primary{% endif %} mb-2">
+                            {{ shop.shop_name }}
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 筛选表单 -->
+    <div class="container mt-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">筛选条件</h5>
+            </div>
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    {% if current_filters.shop_id %}
+                    <input type="hidden" name="shop_id" value="{{ current_filters.shop_id }}">
+                    {% endif %}
+                    <div class="col-md-3">
+                        <label for="min_price" class="form-label">最低价格</label>
+                        <input type="number" class="form-control" id="min_price" name="min_price" value="{{ current_filters.min_price }}" min="0" step="0.1">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="max_price" class="form-label">最高价格</label>
+                        <input type="number" class="form-control" id="max_price" name="max_price" value="{{ current_filters.max_price }}" min="0" step="0.1">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="taste" class="form-label">口味</label>
+                        <select class="form-select" id="taste" name="taste">
+                            <option value="">全部</option>
+                            {% for taste_value, taste_label in taste_choices %}
+                            <option value="{{ taste_value }}" {% if current_filters.taste == taste_value %}selected{% endif %}>{{ taste_label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="is_spicy" class="form-label">是否辣</label>
+                        <select class="form-select" id="is_spicy" name="is_spicy">
+                            <option value="">全部</option>
+                            <option value="true" {% if current_filters.is_spicy == 'true' %}selected{% endif %}>是</option>
+                            <option value="false" {% if current_filters.is_spicy == 'false' %}selected{% endif %}>否</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="sort_by" class="form-label">排序方式</label>
+                        <select class="form-select" id="sort_by" name="sort_by">
+                            <option value="dish_id" {% if current_filters.sort_by == 'dish_id' %}selected{% endif %}>默认</option>
+                            <option value="price_asc" {% if current_filters.sort_by == 'price_asc' %}selected{% endif %}>价格从低到高</option>
+                            <option value="price_desc" {% if current_filters.sort_by == 'price_desc' %}selected{% endif %}>价格从高到低</option>
+                            <option value="calories_asc" {% if current_filters.sort_by == 'calories_asc' %}selected{% endif %}>热量从低到高</option>
+                            <option value="calories_desc" {% if current_filters.sort_by == 'calories_desc' %}selected{% endif %}>热量从高到低</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary">应用筛选</button>
+                        <a href="{% url 'dish:show_dish' %}{% if current_filters.shop_id %}?shop_id={{ current_filters.shop_id }}{% endif %}" class="btn btn-secondary">重置筛选</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 菜品列表 -->
+    <div class="row">
+        {% for dish in dish_list %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                {% if dish.dish_photo %}
+                <img src="{{ dish.dish_photo.url }}" class="card-img-top" alt="{{ dish.dish_name }}">
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ dish.dish_name }}</h5>
+                    <p class="card-text">{{ dish.dish_detail }}</p>
+                    <p class="card-text">
+                        <small class="text-muted">价格: ¥{{ dish.dish_price }}</small>
+                    </p>
+                    <!-- 营养信息 -->
+                    <div class="nutrition-info">
+                        <h6>营养信息</h6>
+                        <ul class="list-unstyled">
+                            <li>热量: {{ dish.calories }}千卡</li>
+                            <li>蛋白质: {{ dish.protein }}克</li>
+                            <li>脂肪: {{ dish.fat }}克</li>
+                            <li>碳水化合物: {{ dish.carbohydrates }}克</li>
+                        </ul>
+                        <p class="mb-0">
+                            <span class="badge {% if dish.is_spicy %}bg-danger{% else %}bg-success{% endif %}">
+                                {% if dish.is_spicy %}辣{% else %}不辣{% endif %}
+                            </span>
+                            <span class="badge bg-info">{{ dish.taste }}</span>
+                        </p>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    {% if request.session.is_login %}
+                    <button
+                        class="btn btn-outline-primary btn-sm toggle-preference {% if dish.dish_id in favorite_dishes %}active{% endif %}"
+                        data-dish-id="{{ dish.dish_id }}" data-preference-type="favorite">
+                        <i class="fas fa-heart"></i> 收藏
+                    </button>
+                    <button
+                        class="btn btn-outline-danger btn-sm toggle-preference {% if dish.dish_id in blocked_dishes %}active{% endif %}"
+                        data-dish-id="{{ dish.dish_id }}" data-preference-type="blocked">
+                        <i class="fas fa-ban"></i> 拉黑
+                    </button>
+                    {% endif %}
+                    <a href="{% url 'dish:dish_comments' dish.dish_id %}" class="btn btn-info btn-sm">查看评价</a>
+                    {% if dish.dish_active == 1 %}
+                    <a href="{% url 'dish:get_order' dish.dish_id %}" class="btn btn-success btn-sm">立即下单</a>
+                    {% else %}
+                    <button class="btn btn-secondary btn-sm" disabled>已售罄</button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // 收藏/拉黑功能
+        const toggleButtons = document.querySelectorAll('.toggle-preference');
+
+        toggleButtons.forEach(button => {
+            button.addEventListener('click', function () {
+                const dishId = this.dataset.dishId;
+                const preferenceType = this.dataset.preferenceType;
+
+                fetch(`/dish/dish/${dishId}/toggle_preference/${preferenceType}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'Content-Type': 'application/json',
+                    },
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            this.classList.toggle('active');
+                            // 更新按钮文本
+                            const icon = this.querySelector('i');
+                            const text = this.textContent.trim();
+                            if (data.action === 'added') {
+                                this.classList.add('active');
+                                this.textContent = text.replace('收藏', '已收藏').replace('拉黑', '已拉黑');
+                            } else {
+                                this.classList.remove('active');
+                                this.textContent = text.replace('已收藏', '收藏').replace('已拉黑', '拉黑');
+                            }
+                            this.appendChild(icon);
+                        } else {
+                            alert(data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('操作失败，请重试');
+                    });
+            });
+        });
+
+        // 推荐功能
+        const recommendBtn = document.getElementById('recommendBtn');
+        
+        recommendBtn.addEventListener('click', function() {
+            // 获取所有显示的菜品卡片
+            const dishCards = document.querySelectorAll('.card.h-100');
+            
+            // 确保至少有3个菜品
+            if (dishCards.length < 3) {
+                alert('菜品数量不足，无法推荐！');
+                return;
+            }
+            
+            // 获取前三个菜品的名称
+            const firstThreeDishes = Array.from(dishCards).slice(0, 3).map(card => {
+                return card.querySelector('.card-title').textContent;
+            });
+            
+            // 随机选择一个
+            const randomIndex = Math.floor(Math.random() * 3);
+            const recommendedDish = firstThreeDishes[randomIndex];
+            
+            alert(`今天推荐你吃：${recommendedDish}！`);
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %}

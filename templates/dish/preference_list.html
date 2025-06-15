@@ -1,0 +1,93 @@
+{% extends 'dish/dish_base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">{{ title }}</h2>
+
+    {% if preferences %}
+    <div class="row">
+        {% for preference in preferences %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                {% if preference.dish.dish_photo %}
+                <img src="{{ preference.dish.dish_photo.url }}" class="card-img-top"
+                    alt="{{ preference.dish.dish_name }}">
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ preference.dish.dish_name }}</h5>
+                    <p class="card-text">{{ preference.dish.dish_detail }}</p>
+                    <p class="card-text">
+                        <small class="text-muted">价格: ¥{{ preference.dish.dish_price }}</small>
+                    </p>
+                    <p class="card-text">
+                        <small class="text-muted">窗口: {{ preference.dish.shop.shop_name }}</small>
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <button class="btn btn-danger btn-sm toggle-preference" data-dish-id="{{ preference.dish.dish_id }}"
+                        data-preference-type="{{ preference_type }}">
+                        取消{{ title }}
+                    </button>
+                    <a href="{% url 'dish:dish_comments' preference.dish.dish_id %}"
+                        class="btn btn-info btn-sm">查看评价</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        您还没有{{ title }}任何菜品。
+    </div>
+    {% endif %}
+</div>
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const toggleButtons = document.querySelectorAll('.toggle-preference');
+
+        toggleButtons.forEach(button => {
+            button.addEventListener('click', function () {
+                const dishId = this.dataset.dishId;
+                const preferenceType = this.dataset.preferenceType;
+
+                fetch(`/dish/dish/${dishId}/toggle_preference/${preferenceType}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken'),
+                    },
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            location.reload();
+                        } else {
+                            alert(data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('操作失败，请重试');
+                    });
+            });
+        });
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    });
+</script>
+{% endblock %}
+{% endblock %}

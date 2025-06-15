@@ -1,0 +1,67 @@
+{% extends 'dish/dish_base.html' %}
+{% block preproduct %}
+<div class="container headerdiv">
+    <h3 class="headertext" align="center">我的订单</h3>
+</div>
+{% endblock %}
+{% block product_content %}
+
+<style>
+    	.table th, .table td {
+    		text-align: center;
+    		vertical-align: middle!important;
+    	}
+
+</style>
+
+<div class="container jumbotron">
+
+    <div class="table-responsive text-nowrap">
+
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th scope="col">列表项</th>
+                <th scope="col">订单号</th>
+                <th scope="col">顾客名称</th>
+                <th scope="col">菜品</th>
+                <th scope="col">商家</th>
+                <th scope="col">下单时间</th>
+                <th scope="col">订单价格</th>
+                <th scope="col">订单状态</th>
+                <th scope="col">操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for order in order_list %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>ID-{{ order.order_id }}</td>
+                <td>{{ order.customer.customer_name }}</td>
+                <td>{{ order.dish.dish_name }}</td>
+                <td>{{ order.dish.shop.shop_name }}</td>
+                <td>{{ order.order_time }}</td>
+                <td>{{ order.order_price }}元</td>
+                <td>{{ order.get_order_status_display }}</td>
+                <td>
+                    {% if order.order_status < 3 %}
+                    <a href="{{ order.dish.get_comments_url }}" class="btn btn-primary btn-sm">评论</a>
+                    {% else %}
+                    <span class="badge badge-success">已评价</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="9" class="text-center">暂无订单</td>
+            </tr>
+            {% endfor %}
+
+            </tbody>
+        </table>
+
+    </div>
+
+</div>
+
+{% endblock %}

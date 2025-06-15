@@ -1,0 +1,13 @@
+asgiref==3.8.1
+beautifulsoup4==4.13.4
+bootstrap4==0.1.0
+Django==3.2.8
+django-bootstrap4==24.1
+django-simpleui==2025.1.13
+pillow==10.4.0
+PyMySQL==1.0.2
+pytz==2025.2
+soupsieve==2.7
+sqlparse==0.5.3
+typing_extensions==4.13.2
+tzdata==2025.2
